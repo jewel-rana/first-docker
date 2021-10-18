@@ -1,0 +1,57 @@
+version: "3.7"
+services:
+    server:
+        image: nginx:alpine
+        container_name: first-docker-laravel-ngnix
+        restart: unless-stopped
+        ports:
+            -   8000:8000
+            - 443:443
+        volumes:
+            -   ./:/var/www/html:cached
+            - ./.docker/ngnix:/etc/ngnix/conf.d
+            - ./.docker/ngnix/ssl:/etc/nginx/conf.d/ssl
+        depends_on:
+            -   app
+        networks:
+            - first-docker-laravel-network
+    app:
+        build:
+            context: ./.docker/php
+            dockerfile: Dockerfile
+        container_name: first-docker-laravel-php
+        restart: unless-stopped
+        volumes:
+                - ./:/var/www/html:cached
+                - ./.docker/php/php-fpm.ini:/usr/local/etc/php/conf.d/custom.ini
+
+    mariadb:
+        image: mariadb:10.5.5
+        container_name: first-docker-laravel-mariadb
+        restart: unless-stopped
+        ports:
+            -   3306:3306
+        volumes:
+            -   ./data/mysql:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_USER=root
+            - MYSQL_PASSWORD=root
+            - MYSQL_DATABASE=first_docker
+        networks:
+            - first-docker-laravel-network
+
+    redis:
+        image: redis:alpine
+        container_name: first-docker-laravel-redis
+        volumes:
+            -   ./dataredis:/data
+
+
+networks:
+    first-docker-laravel-network:
+        driver: bridge
+
+volumes:
+    first-docker-laravel-volume:
+        driver: local
